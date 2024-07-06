@@ -1,114 +1,126 @@
-#I'm pretty new to programming, I started a little over a month ago, I know my code looks horrible and I apologize in advance for the visual pain it may cause you.
-#If you want to help me improve my code, simplify it and make it look more elegant, all your tips and code are welcome. Thank you! :D
-#(I'll add more comments to make it easier to navigate, but for now if you need to know anything about my code let me know on Discord and I'll explain)
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QMenu
 
-from threading import Thread
-from bs4 import BeautifulSoup
-import webbrowser
-import urllib.request
-import requests
-import datetime
-import json
-import sys
-import os
-import re
-from PyQt5 import QtCore,QtGui,QtWidgets
-from PyQt5.QtGui import QCursor,QIcon,QFont,QFontDatabase,QPalette,QColor,QIntValidator,QPixmap
-from PyQt5.QtCore import QEvent,Qt,QPoint,pyqtSignal
-from PyQt5.QtWidgets import QMenu,QComboBox,QCheckBox,QFileDialog,QColorDialog
 class CTabWindow(QtWidgets.QTabWidget):
     def __init__(self, parent=None):
         super(CTabWindow, self).__init__(parent)
+
     def resizeEvent(self, event):
         self.tabBar().setFixedWidth(self.width())
         super(CTabWindow, self).resizeEvent(event)
+
 class HCCheckBox(QtWidgets.QCheckBox):
     entered = pyqtSignal()
     leaved = pyqtSignal()
+
     def enterEvent(self, event):
         super().enterEvent(event)
         self.entered.emit()
+
     def leaveEvent(self, event):
         super().leaveEvent(event)
         self.leaved.emit()
+
+def create_context_menu(widget):
+    context_menu = QMenu()
+    context_menu.setFont(QtGui.QFont('Arial', 9))
+    context_menu.setStyleSheet('''
+        QMenu {
+            background-color: rgb(199, 213, 224);
+            border-radius: 3px;
+            color: rgb(50, 53, 60);
+        }
+        QMenu::item {
+            background-color: transparent;
+            border-radius: 3px;
+            padding: 3px;
+            margin: 3px;
+        }
+        QMenu::item:selected {
+            background-color: rgb(50, 53, 60);
+            color: rgb(199, 213, 224);
+        }
+        QMenu::separator {
+            border: rgb(50, 53, 60);
+            border-radius: background: rgb(50, 53, 60);
+            margin: 3px;
+        }
+    ''')
+    return context_menu
+
 class CLineEdit(QtWidgets.QLineEdit):
     def contextMenuEvent(self, event):
-        contextMenu=QMenu()
-        contextMenu.setFont(QtGui.QFont('Arial',9))
-        contextMenu.setStyleSheet('QMenu{background-color:rgb(199,213,224);border-radius:3px;color:rgb(50,53,60)}QMenu::item {background-color: transparent;border-radius: 3px;padding:3px;margin:3px;}QMenu::item:selected {background-color:rgb(50,53,60);color:rgb(199,213,224);}QMenu::separator {border:rgb(50,53,60);border-radius: background:rgb(50,53,60);margin:3px;}')
-        undoAction=contextMenu.addAction('Undo')
-        redoAction=contextMenu.addAction('Redo')
-        contextMenu.addSeparator()
-        selectallAction=contextMenu.addAction('Select All')
-        contextMenu.addSeparator()
-        copyAction=contextMenu.addAction('Copy')
-        cutAction=contextMenu.addAction('Cut')
-        pasteAction=contextMenu.addAction('Paste')
-        action=contextMenu.exec_(self.mapToGlobal(event.pos()))
-        if action==undoAction:
-            self.undo()
-        if action==redoAction:
-            self.redo()
-        if action==copyAction:
-            self.copy()
-        if action==cutAction:
-            self.cut()
-        if action==pasteAction:
-            self.paste()
-        if action==selectallAction:
-            self.selectAll()
+        context_menu = create_context_menu(self)
+        actions = {
+            'Undo': self.undo,
+            'Redo': self.redo,
+            'Select All': self.selectAll,
+            'Copy': self.copy,
+            'Cut': self.cut,
+            'Paste': self.paste
+        }
+        for action_name, action_func in actions.items():
+            context_menu.addAction(action_name)
+            if action_name in ['Undo', 'Redo', 'Select All']:
+                context_menu.addSeparator()
+
+        action = context_menu.exec_(self.mapToGlobal(event.pos()))
+        if action:
+            action.trigger()
+
 class CPlainTextEdit(QtWidgets.QPlainTextEdit):
     def contextMenuEvent(self, event):
-        contextMenu=QMenu()
-        contextMenu.setFont(QtGui.QFont('Arial',9))
-        contextMenu.setStyleSheet('QMenu{background-color:rgb(199,213,224);border-radius:3px;color:rgb(50,53,60)}QMenu::item {background-color: transparent;border-radius: 3px;padding:3px;margin:3px;}QMenu::item:selected {background-color:rgb(50,53,60);color:rgb(199,213,224);}QMenu::separator{border:rgb(50,53,60);border-radius: background:rgb(50,53,60);margin:3px;}')
-        undoAction=contextMenu.addAction('Undo')
-        redoAction=contextMenu.addAction('Redo')
-        contextMenu.addSeparator()
-        selectallAction=contextMenu.addAction('Select All')
-        contextMenu.addSeparator()
-        copyAction=contextMenu.addAction('Copy')
-        cutAction=contextMenu.addAction('Cut')
-        pasteAction=contextMenu.addAction('Paste')
-        action=contextMenu.exec_(self.mapToGlobal(event.pos()))
-        if action==undoAction:
-            self.undo()
-        if action==redoAction:
-            self.redo()
-        if action==copyAction:
-            self.copy()
-        if action==cutAction:
-            self.cut()
-        if action==pasteAction:
-            self.paste()
-        if action==selectallAction:
-            self.selectAll()
+        context_menu = create_context_menu(self)
+        actions = {
+            'Undo': self.undo,
+            'Redo': self.redo,
+            'Select All': self.selectAll,
+            'Copy': self.copy,
+            'Cut': self.cut,
+            'Paste': self.paste
+        }
+        for action_name, action_func in actions.items():
+            context_menu.addAction(action_name)
+            if action_name in ['Undo', 'Redo', 'Select All']:
+                context_menu.addSeparator()
+
+        action = context_menu.exec_(self.mapToGlobal(event.pos()))
+        if action:
+            action.trigger()
+
 class CInfoLine(QtWidgets.QLineEdit):
     def contextMenuEvent(self, event):
-        contextMenu=QMenu()
-        contextMenu.setFont(QtGui.QFont('Arial',9))
-        contextMenu.setStyleSheet('QMenu{background-color:rgb(199,213,224);border-radius:3px;color:rgb(50,53,60)}QMenu::item {background-color: transparent;border-radius: 3px;padding:3px;margin:3px;}QMenu::item:selected {background-color:rgb(50,53,60);color:rgb(199,213,224);}QMenu::separator {border:rgb(50,53,60);border-radius: background:rgb(50,53,60);margin:3px;}')
-        selectallAction=contextMenu.addAction('Select All')
-        contextMenu.addSeparator()
-        copyAction=contextMenu.addAction('Copy')
-        action=contextMenu.exec_(self.mapToGlobal(event.pos()))
-        if action==copyAction:
-            self.copy()
-        if action==selectallAction:
-            self.selectAll()
+        context_menu = create_context_menu(self)
+        actions = {
+            'Select All': self.selectAll,
+            'Copy': self.copy
+        }
+        for action_name, action_func in actions.items():
+            context_menu.addAction(action_name)
+            if action_name == 'Select All':
+                context_menu.addSeparator()
+
+        action = context_menu.exec_(self.mapToGlobal(event.pos()))
+        if action:
+            action.trigger()
+
 class CInfoPlainTextEdit(QtWidgets.QPlainTextEdit):
     def contextMenuEvent(self, event):
-        contextMenu=QMenu()
-        contextMenu.setFont(QtGui.QFont('Arial',9))
-        contextMenu.setStyleSheet('QMenu{background-color:rgb(199,213,224);border-radius:3px;color:rgb(50,53,60)}QMenu::item {background-color: transparent;border-radius: 3px;padding:3px;margin:3px;}QMenu::item:selected {background-color:rgb(50,53,60);color:rgb(199,213,224);}QMenu::separator {border:rgb(50,53,60);border-radius: background:rgb(50,53,60);margin:3px;}')
-        selectallAction=contextMenu.addAction('Select All')
-        contextMenu.addSeparator()
-        copyAction=contextMenu.addAction('Copy')
-        action=contextMenu.exec_(self.mapToGlobal(event.pos()))
-        if action==copyAction:
-            self.copy()
-        if action==selectallAction:
-            self.selectAll()
+        context_menu = create_context_menu(self)
+        actions = {
+            'Select All': self.selectAll,
+            'Copy': self.copy
+        }
+        for action_name, action_func in actions.items():
+            context_menu.addAction(action_name)
+            if action_name == 'Select All':
+                context_menu.addSeparator()
+
+        action = context_menu.exec_(self.mapToGlobal(event.pos()))
+        if action:
+            action.trigger()
+		
 class scmdwd(QtWidgets.QMainWindow):
     dInfo=pyqtSignal()
     def __init__(self):
